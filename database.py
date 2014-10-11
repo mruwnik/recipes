@@ -80,8 +80,6 @@ class DBConfig:
             query = query.filter(Recipe.title.like(title))
         recipes = query.all()
 
-        logging.debug(u'recipes: %s' %
-                      ', '.join([u'{}'.format(recipe) for recipe in recipes]))
         tree = {"recipes": []}
         for recipe in recipes:
             try:

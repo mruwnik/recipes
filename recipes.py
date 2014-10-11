@@ -147,7 +147,7 @@ class RecipesWindow(GUI.MainWindow):
     def addRecipesToTree(self, tree, treeNode, groups, normalPic, expandedPic,
                          recipePic):
 
-        for child, data in groups.iteritems():
+        for child, data in iter(sorted(groups.items())):
             if child != "recipes":
                 node = self.addNodeToTree(tree, treeNode,  child, child.name,
                                         normalPic, expandedPic)
@@ -162,6 +162,7 @@ class RecipesWindow(GUI.MainWindow):
             pass
 
     def setupRecipes(self, recipes, selected=None):
+        tree = self.recipesList
 
         isz = (16,16)
         il = wx.ImageList(isz[0], isz[1])
@@ -172,12 +173,22 @@ class RecipesWindow(GUI.MainWindow):
         self.il = il
 
         try:
-            self.recipesList.DeleteChildren(self.recipesRoot)
+            tree.DeleteChildren(self.recipesRoot)
         except:
-            self.recipesRoot = self.recipesList.AddRoot("Recipes")
+            self.recipesRoot = tree.AddRoot("Recipes")
 
-        self.addRecipesToTree(self.recipesList, self.recipesRoot, recipes,
+        self.addRecipesToTree(tree, self.recipesRoot, recipes,
                                         fldridx, fldropenidx, fileidx)
+
+        item, cookie = tree.GetFirstChild(tree.GetRootItem())
+        while item and tree.ItemHasChildren(item):
+            item, cookie = tree.GetFirstChild(item)
+        with session_scope(self.database) as session:
+            recipe = session.query(Recipe)\
+                    .get(self.recipesList.GetPyData(item))
+
+            self.setStatusBarText(recipe)
+            self.showRecipe(recipe, self.recipe_panel)
 
     def showRecipe(self, recipe, panel):
         panel.set_title(recipe.title)
@@ -279,6 +290,7 @@ class RecipesWindow(GUI.MainWindow):
                 self.setupRecipes(self.database
                                   .getRecipesByGroups(session,
                                                       title="%" + name + "%"))
+                self.recipesList.ExpandAll()
             else:
                 self.setupRecipes(self.database.getRecipesByGroups(session))
 
