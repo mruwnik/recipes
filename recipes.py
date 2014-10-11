@@ -262,10 +262,6 @@ class RecipesWindow(GUI.MainWindow):
 
     def tabChanged( self, event ):
         event.Skip()
-#        try:
-#            self.session().close()
-#        except:
-#            pass
         if self.tabs["recipes"] == self.tabsContainer.GetSelection():
             with session_scope(self.database) as session:
                 self.setupRecipes(self.database.getRecipesByGroups(session))
@@ -274,6 +270,17 @@ class RecipesWindow(GUI.MainWindow):
 
     def setStatusBarText(self, text):
         self.m_statusBar1.SetStatusText(unicode(text))
+
+    def find_name(self, event):
+        event.Skip()
+        name = self.searchRecipeName.GetValue()
+        with session_scope(self.database) as session:
+            if name:
+                self.setupRecipes(self.database
+                                  .getRecipesByGroups(session,
+                                                      title="%" + name + "%"))
+            else:
+                self.setupRecipes(self.database.getRecipesByGroups(session))
 
 def AddRTCHandlers():
         # make sure we haven't already added them.

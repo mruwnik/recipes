@@ -642,18 +642,6 @@ class EditRecipe (wx.Panel):
     def set_save_action(self, action):
         self.save_action = action
 
-    def check_groups(self, recipe):
-        """Checks the recipes groups on the group tree."""
-
-        def getIds(groups, groupIds):
-            for group in groups:
-                groupIds.add(group.id)
-                if group.children:
-                    getIds(group.children, groupIds)
-            return groupIds
-
-        self.editRecipesGroups.CheckById(getIds(recipe.groups, set()))
-
     def set_recipe(self, recipe):
         self.recipeId = recipe.id
         self.set_title(recipe.title)
@@ -662,7 +650,7 @@ class EditRecipe (wx.Panel):
         self.set_ingredients(recipe.ingredients)
         self.set_time(recipe.time)
         self.set_difficulty(recipe.difficulty)
-        self.check_groups(recipe)
+        self.editRecipesGroups.CheckById({group.id for group in recipe.groups})
 
     def get_recipe_id(self):
         try:

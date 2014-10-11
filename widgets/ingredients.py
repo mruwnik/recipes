@@ -15,9 +15,9 @@ class AddIngredients (wx.Panel):
 
         self.substance_names = substance_names
         self.unit_names = unit_names
-    
+
         self.edit_recipe_ingredients_container = wx.BoxSizer( wx.VERTICAL )
-        
+
         self.SetSizer(self.edit_recipe_ingredients_container)
 
     def Clear(self, flag):
@@ -26,7 +26,7 @@ class AddIngredients (wx.Panel):
 
     def set_substance_names(self, names):
         """Set the substance names list
-        
+
         (used for autocompletion)
 
         """
@@ -34,7 +34,7 @@ class AddIngredients (wx.Panel):
 
     def set_unit_names(self, names):
         """Set the unit names list
-        
+
         (used for autocompletion)
 
         """
@@ -51,8 +51,8 @@ class AddIngredients (wx.Panel):
             event.Skip()
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
- 
-        name = TextCtrlAutoComplete(self, 
+
+        name = TextCtrlAutoComplete(self,
                                     choices=self.substance_names,
                                     selectCallback=self.selectCallback,
                                     name="name"
@@ -64,24 +64,24 @@ class AddIngredients (wx.Panel):
             name.SetValue(nameVal)
 
         sizer.Add(name, 3, wx.ALL, 5)
-        
+
         amount_desc = wx.StaticText(self, wx.ID_ANY, u"amount",
                              wx.DefaultPosition, wx.DefaultSize, 0)
         amount_desc.Wrap(-1)
         sizer.Add(amount_desc, 0, wx.ALL, 5)
-        
+
         ingredients_amount = wx.TextCtrl(self, wx.ID_ANY, wx.EmptyString,
                                    wx.DefaultPosition, wx.DefaultSize, 0, name="amount")
         sizer.Add(ingredients_amount, 1, wx.ALL, 5)
         if amountVal:
             ingredients_amount.SetValue(amountVal)
-        
+
         unit_desc = wx.StaticText(self, wx.ID_ANY, u"unit",
                                     wx.DefaultPosition, wx.DefaultSize, 0)
         unit_desc.Wrap(-1)
         sizer.Add(unit_desc, 0, wx.ALL, 5)
-        
-        unit = TextCtrlAutoComplete(self, 
+
+        unit = TextCtrlAutoComplete(self,
                                     choices=self.unit_names,
                                     selectCallback=self.selectCallback,
                                     name="unit"
@@ -92,11 +92,11 @@ class AddIngredients (wx.Panel):
             unit.SetValue(unitVal)
 
         sizer.Add(unit, 1, wx.ALL, 5)
-        
+
         remove_ingredient = wx.Button(self, wx.ID_ANY, u"remove ingredient",
                                     wx.DefaultPosition, wx.DefaultSize, 0)
         sizer.Add(remove_ingredient, 0, wx.ALL, 5)
-        
+
         self.edit_recipe_ingredients_container.Add(sizer, 0, wx.EXPAND, 5)
         self.GetParent().GetParent().Layout()
 
@@ -114,10 +114,6 @@ class AddIngredients (wx.Panel):
             ctrl.SetChoices(choices)
 
     def match_function(self, text, choice):
-        '''
-        Demonstrate "smart" matching feature, by ignoring http:// and www. when doing
-        matches.
-        '''
         t = text.lower()
         c = choice.lower()
         return c.startswith(t)
@@ -130,8 +126,8 @@ class AddIngredients (wx.Panel):
         pass
 
     def find_units(self, ctrl):
-        """Search the units list for the currently input string 
-        
+        """Search the units list for the currently input string
+
         (this is used for autocompletion)
 
         """
@@ -150,7 +146,7 @@ class AddIngredients (wx.Panel):
 
     def get_ingredient(self, elem, validate=True):
         """Extract the ingredient's information
-        
+
         Returns it as the following tuple: (name, amount, unit). If all fields
         are empty, None is returned. If validation is selected and the name is
         empty, False is returned and an error is displayed
@@ -179,8 +175,8 @@ class AddIngredients (wx.Panel):
 
     def get_ingredients(self, validate=True):
         """Return a list of ingredients.
-        
-        Each ingredient is a tuple 
+
+        Each ingredient is a tuple
         (name, amount, unit). if validation is selected and an error is found,
         then None is returned
 

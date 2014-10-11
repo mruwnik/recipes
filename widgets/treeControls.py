@@ -1,3 +1,5 @@
+import logging
+
 import wx
 import wx.lib.customtreectrl
 
