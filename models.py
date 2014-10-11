@@ -3,8 +3,8 @@
 
 """models.py: contains model definitions"""
 
-__author__      = "Daniel O'Connell"
-__copyright__   = "BSD-3"
+__author__ = "Daniel O'Connell"
+__copyright__ = "BSD-3"
 
 from sqlalchemy import Integer, String, DateTime, Text, Float
 from sqlalchemy import Column, Sequence, ForeignKey
@@ -16,6 +16,7 @@ import datetime
 
 Base = declarative_base()
 
+
 class User(Base):
     __tablename__ = 'users'
 
@@ -24,12 +25,14 @@ class User(Base):
     fullname = Column(String(100))
     password = Column(String(255))
     creationDate = Column(DateTime(timezone=True))
-    updateDate = Column("updateDate", DateTime,onupdate=datetime.datetime.now)
+    updateDate = Column("updateDate", DateTime, onupdate=datetime.datetime.now)
     recipies = relationship("Recipe", backref="user",
-                           cascade="all, delete, delete-orphan")
+                            cascade="all, delete, delete-orphan")
 
     def __repr__(self):
-        return "<User(name='%s', fullname='%s', password='%s')>" % (self.name, self.fullname, self.password)
+        return "<User(name='%s', fullname='%s', password='%s')>" %\
+                (self.name, self.fullname, self.password)
+
 
 class Image(Base):
     __tablename__ = 'images'
@@ -137,9 +140,12 @@ class Ingredient(Base):
         return result
 
 association_table = Table('association', Base.metadata,
-    Column('group_id', Integer, ForeignKey('recipes.id')),
-    Column('recipe_id', Integer, ForeignKey('groups.id'))
-)
+                          Column('group_id',
+                                 Integer,
+                                 ForeignKey('recipes.id')),
+                          Column('recipe_id',
+                                 Integer,
+                                 ForeignKey('groups.id')))
 
 class Group(Base):
     __tablename__ = 'groups'
@@ -184,25 +190,35 @@ class Group(Base):
             result['updateDate'] = self.updateDate
         return result
 
+
 class Recipe(Base):
     __tablename__ = 'recipes'
 
     id = Column(Integer, Sequence('recipies_id_seq'), primary_key=True)
     title = Column(String(500))
     description = Column(Text)
-    algorythm= Column(Text)
+    algorythm = Column(Text)
     pics = relationship("Image", backref="recipie",
-                           cascade="all, delete, delete-orphan")
-    ingredients = relationship("Ingredient", backref="recipe",                                                          cascade="all, delete, delete-orphan")
+                        cascade="all, delete, delete-orphan")
+    ingredients = relationship("Ingredient", backref="recipe",
+                               cascade="all, delete, delete-orphan")
     time = Column(Integer)
     difficulty = Column(Integer)
     user_id = Column(Integer, ForeignKey('users.id'))
     creationDate = Column(DateTime(timezone=True))
-    updateDate = Column("updateDate", DateTime,onupdate=datetime.datetime.now)
+    updateDate = Column("updateDate", DateTime,
+                        onupdate=datetime.datetime.now)
 
     def __repr__(self):
         return "<Recipe(title='%s', description='%s', algorythm='%s')>" % \
-    (self.title, self.description, self.algorythm)
+            (self.title, self.description, self.algorythm)
+
+    def __str__(self):
+        return self.__unicode__()
+
+    def __unicode__(self):
+        return u"<Recipe(title='%s', description='%s', algorythm='%s')>" % \
+            (self.title, self.description, self.algorythm)
 
     def to_dict(self):
         result = {'id': self.id,

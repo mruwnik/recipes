@@ -4,6 +4,7 @@
 """editRecipe.py: handles the addition of a recipe"""
 
 from cStringIO import StringIO
+import logging
 
 import wx
 import wx.aui
@@ -49,7 +50,7 @@ class EditRecipe (wx.Panel):
                                         wx.SUNKEN_BORDER,
                                         name="panel1")
 
-        self.fields_container = wx.FlexGridSizer(6, 2, 0, 0)
+        self.fields_container = wx.FlexGridSizer(11, 2, 0, 0)
         self.fields_container.SetFlexibleDirection(wx.BOTH)
         self.fields_container.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_SPECIFIED)
 
@@ -541,9 +542,9 @@ class EditRecipe (wx.Panel):
     def set_ingredients(self, ingredients):
         for i in ingredients:
             self.editRecipeIngredients.add_ingredients_row(None,
-                                                           i.substance.name,
+                                                           i.substance and i.substance.name,
                                                            str(i.amount),
-                                                           i.unit.name)
+                                                           i.unit and i.unit.name)
 
     def set_time(self, value):
         self.editRecipeTime.SetValue(str(value))
@@ -585,7 +586,7 @@ class EditRecipe (wx.Panel):
                                    unicode(child[nameField]),
                                    tc.CHECKBOX,
                                    wnd=None, image=normalPic,
-                                   selImage=normalPic, data=child)
+                                   selImage=normalPic, data=child.id)
             if child[childrenField]:
                 self.addNodesToTree(tree, node, child, normalPic,
                                     expandedPic, nameField, childrenField)
@@ -654,7 +655,7 @@ class EditRecipe (wx.Panel):
         self.editRecipesGroups.CheckById(getIds(recipe.groups, set()))
 
     def set_recipe(self, recipe):
-        self.recipe = recipe
+        self.recipeId = recipe.id
         self.set_title(recipe.title)
         self.set_description(recipe.title)
         self.set_algorythm(recipe.algorythm)
@@ -663,8 +664,9 @@ class EditRecipe (wx.Panel):
         self.set_difficulty(recipe.difficulty)
         self.check_groups(recipe)
 
-    def get_recipe(self):
+    def get_recipe_id(self):
         try:
-            return self.recipe
+            return self.recipeId
         except AttributeError as e:
+            logging.error(e)
             return None

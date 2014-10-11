@@ -3,8 +3,10 @@
 
 """recipe.py: the main functionality of this program"""
 
-__author__      = "Daniel O'Connell"
-__copyright__   = "BSD-3"
+__author__ = "Daniel O'Connell"
+__copyright__ = "BSD-3"
+
+import logging
 
 import wx
 import wx.richtext as rt
@@ -13,7 +15,13 @@ import sqlalchemy.exc
 import GUI
 from widgets.recipePanel import RecipePanel
 from widgets.editRecipe import EditRecipe
-from  database import *
+from database import DBConfig
+from database import session_scope
+from models import *
+
+
+logging.basicConfig(filename='recipes.log',level=logging.DEBUG)
+
 
 class RecipesWindow(GUI.MainWindow):
     def setup(self):
@@ -23,7 +31,7 @@ class RecipesWindow(GUI.MainWindow):
         self.database = DBConfig('sqlite:///database.db')
 
         session = self.database.getSession()
-        self.user =  session.query(User).filter(User.name.like('dan')).first()
+        self.userId =  session.query(User).filter(User.name.like('dan')).first().id
 
         session.close()
 
@@ -33,13 +41,6 @@ class RecipesWindow(GUI.MainWindow):
         self.recipes_menu_options = ["open in new tab", "edit", "delete"]
 
         self.setStatusBarText("setup: OK")
-
-    def getSession(self):
-        try:
-            return self.session
-        except:
-            self.session = self.database.getSession()
-        return self.session
 
     def findRecipes( self, event ):
         event.Skip()
@@ -68,42 +69,41 @@ class RecipesWindow(GUI.MainWindow):
             #TODO: display error message
 
         if not errors:
-            recipe = edit_recipe.get_recipe()
-            if not recipe:
-                recipe = Recipe()
-            recipe.title=title
-            recipe.description=edit_recipe.get_description()
-            recipe.algorythm=edit_recipe.get_algorythm()
-            recipe.time=edit_recipe.get_time()
-            recipe.difficulty=edit_recipe.get_difficulty()
-            recipe.user=self.user
-            recipe.groups=edit_recipe.get_groups()
+            with session_scope(self.database) as session:
+                logging.debug("user %s" % session.query(User).get(self.userId))
+                recipe = session.query(Recipe).get(edit_recipe.get_recipe_id())
+                if not recipe:
+                    recipe = Recipe()
+                recipe.title = title
+                recipe.description = edit_recipe.get_description()
+                recipe.algorythm = edit_recipe.get_algorythm()
+                recipe.time = edit_recipe.get_time()
+                recipe.difficulty = edit_recipe.get_difficulty()
+                recipe.groups = session.query(Group)\
+                    .filter(Group.id.in_(edit_recipe.get_groups())).all()
+                recipe.user = session.query(User).get(self.userId)
 
-            if not recipe.id:
-                self.setStatusBarText(self.database.addObject(recipe))
-            elif recipe.ingredients:
-                for ingredient in recipe.ingredients:
-                    self.getSession().delete(ingredient)
-                recipe.ingredients = []
-                self.getSession().flush()
+                if not recipe.id:
+                    self.setStatusBarText(session.add(recipe))
+                elif recipe.ingredients:
+                    for ingredient in recipe.ingredients:
+                        session.delete(ingredient)
+                    recipe.ingredients = []
+                    session.flush()
 
-            for substance, amount, unit in ingredients:
-                try:
-                    self.database\
-                        .addObject(Ingredient(recipe=recipe,
-                                            substance=self.database\
-                                                .getSubstance(substance,
-                                                       self.getSession()),
-                                        unit=self.database\
-                                                .getUnit(unit, self.getSession()),
-                                          amount=amount))
-                except sqlalchemy.exc.IntegrityError as e:
-                    print e
-
-            self.getSession().commit()
+                for substance, amount, unit in ingredients:
+                    try:
+                        session.add(Ingredient(recipe=recipe,
+                                                  substance=self.database\
+                                                      .getSubstance(substance,
+                                                                    session),
+                                                  unit=self.database\
+                                                         .getUnit(unit, session),
+                                                  amount=amount))
+                    except sqlalchemy.exc.IntegrityError as e:
+                        logging.error(e)
 
             current = self.tabsContainer.GetSelection()
-            self.setupRecipes(self.database.getRecipesByGroups(self.getSession()))
             self.tabsContainer.SetSelection(self.tabs["recipes"])
             #TODO: this should be a delete, but that causes everything to blow up
             self.tabsContainer.RemovePage(current)
@@ -111,13 +111,14 @@ class RecipesWindow(GUI.MainWindow):
             self.setStatusBarText("errors")
 
     def setupEditRecipe(self, tab):
-        substance_names = [name.name for name in
-                                    self.database.getSubstances(self.getSession())]
-        unit_names = [name.name for name in
-                                    self.database.getUnits(self.getSession())]
-        groups = self.database.getGroups(self.getSession())
-        tab.setup(groups, substance_names, unit_names)
-        tab.set_save_action(self.saveRecipe)
+        with session_scope(self.database) as session:
+            substance_names = [name.name for name in
+                                    self.database.getSubstances(session)]
+            unit_names = [name.name for name in
+                                    self.database.getUnits(session)]
+            groups = self.database.getGroups(session)
+            tab.setup(groups, substance_names, unit_names)
+            tab.set_save_action(self.saveRecipe)
 
     def edit_recipe(self, recipe):
         tab = wx.Panel(self.tabsContainer, wx.ID_ANY,
@@ -138,7 +139,7 @@ class RecipesWindow(GUI.MainWindow):
 
     def addNodeToTree(self, tree, parent, data, name, normalPic, expandedPic):
         node = tree.AppendItem(parent, name)
-        tree.SetPyData(node, data)
+        tree.SetPyData(node, data.id)
         tree.SetItemImage(node, normalPic, wx.TreeItemIcon_Normal)
         tree.SetItemImage(node, expandedPic, wx.TreeItemIcon_Expanded)
         return node
@@ -218,16 +219,17 @@ class RecipesWindow(GUI.MainWindow):
             menu.Destroy()
 
     def recipe_options(self, event):
-        if event.GetId() == 0: # open in new tab
-            self.open_recipe_tab(self.selected_recipe)
-        elif event.GetId() == 1: # edit
-            self.edit_recipe(self.selected_recipe)
-        elif event.GetId() == 2: # delete
-            self.getSession().delete(self.selected_recipe)
-            self.getSession().commit()
-            self.selected_recipe = None
-            self.recipesList.Delete(self.selected_node)
-            self.setupRecipes(self.database.getRecipesByGroups(self.getSession()))
+        with session_scope(self.database) as session:
+            recipe = session.query(Recipe).get(self.selected_recipe)
+            if event.GetId() == 0: # open in new tab
+                self.open_recipe_tab(recipe)
+            elif event.GetId() == 1: # edit
+                self.edit_recipe(recipe)
+            elif event.GetId() == 2: # delete
+                session.delete(recipe)
+                session.commit()
+                self.selected_recipe = None
+                self.setupRecipes(self.database.getRecipesByGroups(session))
             self.Layout()
 
     def open_recipe_tab(self, recipe):
@@ -249,8 +251,12 @@ class RecipesWindow(GUI.MainWindow):
         event.Skip()
         item = event.GetItem()
         if item and not self.recipesList.ItemHasChildren(item):
-            self.setStatusBarText(self.recipesList.GetPyData(item))
-            self.showRecipe(self.recipesList.GetPyData(item), self.recipe_panel)
+            with session_scope(self.database) as session:
+                recipe = session.query(Recipe)\
+                    .get(self.recipesList.GetPyData(item))
+
+                self.setStatusBarText(recipe)
+                self.showRecipe(recipe, self.recipe_panel)
         else:
             self.recipesList.Toggle(item)
 
@@ -261,7 +267,8 @@ class RecipesWindow(GUI.MainWindow):
 #        except:
 #            pass
         if self.tabs["recipes"] == self.tabsContainer.GetSelection():
-            self.setupRecipes(self.database.getRecipesByGroups(self.getSession()))
+            with session_scope(self.database) as session:
+                self.setupRecipes(self.database.getRecipesByGroups(session))
 #        elif self.tabs["edit"] == self.tabsContainer.GetSelection():
 #            self.setupEditRecipe(self.edit_recipe_tab)
 
@@ -280,14 +287,20 @@ def AddRTCHandlers():
         # to store the images in the memory file system.
         wx.FileSystem.AddHandler(wx.MemoryFSHandler())
 
+
+logging.debug("creating app")
 app = wx.App()
 
 AddRTCHandlers()
+logging.debug("added RTC handlers")
 
 mainWindow = RecipesWindow(None)
 mainWindow.setup()
+logging.debug("setup done")
 mainWindow.Show()
+logging.debug("showing window")
 
+logging.debug("starting main loop")
 app.MainLoop()
 
 session = mainWindow.database.getSession()

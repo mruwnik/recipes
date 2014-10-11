@@ -6,12 +6,28 @@
 __author__      = "Daniel O'Connell"
 __copyright__   = "BSD-3"
 
+import logging
+from contextlib import contextmanager
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
 
 from models import User, Unit, Image, Substance, Ingredient, Group, Recipe
-import models
+
+
+@contextmanager
+def session_scope(database):
+    """Provide a transactional scope around a series of operations."""
+    session = database.getSession()
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 class DBConfig:
     def __init__(self, database, debug=True):
@@ -19,37 +35,21 @@ class DBConfig:
         self.sessionFactory = sessionmaker(bind=self.engine)
 
     def createDB(self):
-        models.createDB(self.engine) 
+        models.createDB(self.engine)
 
     def getSession(self):
         return self.sessionFactory()
 
     def addObject(self, obj):
-        session = self.getSession()
         result = "ok"
-        try:
+        with session_scope(self) as session:
             result = session.add(obj)
-
-            session.commit()
-        except Exception, e:
-            print e
-            session.rollback()
-            result = e
-        session.close()
         return result
 
     def addObjects(self, objs):
-        session = self.getSession()
         result = "ok"
-        try:
+        with session_scope(self) as session:
             result = session.add_all(objs)
-
-            session.commit()
-        except Exception, e:
-            print e
-            session.rollback()
-            result = e
-        session.close()
         return result
 
     def getGroupRecipes(self, group):
@@ -74,24 +74,27 @@ class DBConfig:
             return branch[group]
 
     def getRecipesByGroups(self, session, parent=None, title=None):
-#        children = filter(self.getGroupRecipes,
-#                        session.query(Group).filter(Group.parent_id==None).all())
         query = session.query(Recipe)
         if title:
-            print title
+            logging.info(u"search for Recipe: %s", title)
             query = query.filter(Recipe.title.like(title))
         recipes = query.all()
 
+        logging.debug(u'recipes: %s' %
+                      ', '.join([u'{}'.format(recipe) for recipe in recipes]))
         tree = {"recipes": []}
         for recipe in recipes:
-            if recipe.groups:
-                for group in recipe.groups:
-                    self.addGroupToTree(tree, group)["recipes"].append(recipe)
-            else:
-                tree["recipes"].append(recipe)
+            try:
+                if recipe.groups:
+                    for group in recipe.groups:
+                        self.addGroupToTree(tree, group)["recipes"].append(recipe)
+                else:
+                    tree["recipes"].append(recipe)
+            except Exception as e:
+                logging.error(u'error for %s' % recipe.title)
+                logging.error(e)
 
         return tree
-#        return {"recipes": recipes, "children": children} 
 
     def getGroups(self, session, parent=None):
         groups = session.query(Group).filter(Group.parent_id==None).all()
@@ -133,9 +136,9 @@ class DBConfig:
         return substance
 
     def getNewerEntries(self, session, date):
-        return {"Image":[elem.to_dict for elem in 
+        return {"Image":[elem.to_dict for elem in
                          session.query(Image).filter(Image.updateDate > date).all()],
-                "Unit": [elem.to_dict() for elem in 
+                "Unit": [elem.to_dict() for elem in
                         session.query(Unit).filter(Unit.updateDate > date).all()],
                 "Substance": [elem.to_dict() for elem in
                     session.query(Substance).filter(Substance.updateDate > date).all()],

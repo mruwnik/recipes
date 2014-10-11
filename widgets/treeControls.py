@@ -76,7 +76,7 @@ class ControlsTreeCtrl(wx.lib.customtreectrl.CustomTreeCtrl):
         def CheckItems(item, ids):
             data = self.GetPyData(item)
             if data:
-                item.Check(data.id in ids)
+                item.Check(data in ids)
 
             if item.HasChildren():
                 for child in item.GetChildren():
