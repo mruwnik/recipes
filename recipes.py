@@ -104,6 +104,7 @@ class RecipesWindow(GUI.MainWindow):
 
             current = self.tabsContainer.GetSelection()
             self.setupRecipes(self.database.getRecipesByGroups(self.getSession()))
+            self.tabsContainer.SetSelection(self.tabs["recipes"])
             #TODO: this should be a delete, but that causes everything to blow up
             self.tabsContainer.RemovePage(current)
         else:
@@ -160,7 +161,6 @@ class RecipesWindow(GUI.MainWindow):
             pass
 
     def setupRecipes(self, recipes, selected=None):
-        self.tabsContainer.SetSelection(self.tabs["recipes"])
 
         isz = (16,16)
         il = wx.ImageList(isz[0], isz[1])
@@ -227,6 +227,7 @@ class RecipesWindow(GUI.MainWindow):
             self.getSession().commit()
             self.selected_recipe = None
             self.recipesList.Delete(self.selected_node)
+            self.setupRecipes(self.database.getRecipesByGroups(self.getSession()))
             self.Layout()
 
     def open_recipe_tab(self, recipe):
