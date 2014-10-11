@@ -261,8 +261,8 @@ class RecipesWindow(GUI.MainWindow):
 #            pass
         if self.tabs["recipes"] == self.tabsContainer.GetSelection():
             self.setupRecipes(self.database.getRecipesByGroups(self.getSession()))
-        elif self.tabs["edit"] == self.tabsContainer.GetSelection():
-            self.setupEditRecipe(self.edit_recipe_tab)
+#        elif self.tabs["edit"] == self.tabsContainer.GetSelection():
+#            self.setupEditRecipe(self.edit_recipe_tab)
 
     def setStatusBarText(self, text):
         self.m_statusBar1.SetStatusText(unicode(text))
@@ -287,37 +287,8 @@ mainWindow = RecipesWindow(None)
 mainWindow.setup()
 mainWindow.Show()
 
-print "main loop:", app.MainLoop()
+app.MainLoop()
 
 session = mainWindow.database.getSession()
-#for group in mainWindow.database.getGroups():
-#    session.delete(group)
-
-
-#groups = [{"name": "Desery", "subgroups":[{"name": "Lody"},
-#                                      {"name": "Ciasta"}, {"name": "Ciasteczka"},
-#                                      {"name": "Cukierki"}, {"name": "Ozdobne"}]},
-#           {"name": "Zupy"},
-#           {"name": "Warzywa", "subgroups":[{"name": u'Sałatki'}, {"name":
-#                                                                    u'Surówki'}]},
-#           {"name": "Napoje", "subgroups":[{"name": u'Ciepłe'}, {"name": "Zimne"}]},
-#           {"name": "Etniczne", "description":"specyficzne dla danej kultury itp.",
-#            "subgroups":[{"name":"Polskie"},{"name":u'Japońskie'},{"name":u'Włoskie'},
-#                         {"name":"Brytyjskie"}]}]
-
-#mainWindow.database.addGroups(groups, None, session)
-
-#groups = session.query(Group).filter(Group.parent_id==None).all()
-#groups = session.query(Group).all()
-#print groups
-#for group in groups:
-#    session.delete(group)
-
-#session.commit()
-
-#print mainWindow.database.getRecipesByGroups(session)
-
-#import datetime
-#print mainWindow.database.getNewerEntries(session, "2012-02-23")
 
 session.close()

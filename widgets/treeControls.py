@@ -26,14 +26,13 @@ class ControlsTreeCtrl(wx.lib.customtreectrl.CustomTreeCtrl):
         isz = (16, 16)
         il = wx.ImageList(isz[0], isz[1])
         self.icons = {
-            FOLDER_ICON: il.Add(wx.ArtProvider_GetBitmap(
-                                                        wx.ART_FOLDER,
-                                                        wx.ART_OTHER, isz)),
+            FOLDER_ICON: il.Add(wx.ArtProvider_GetBitmap(wx.ART_FOLDER,
+                                                         wx.ART_OTHER, isz)),
             FOLDER_OPEN_ICON: il.Add(wx.ArtProvider_GetBitmap(wx.ART_FILE_OPEN,
-                                                              wx.ART_OTHER, isz)),
-            FILE_ICON: il.Add(wx.ArtProvider_GetBitmap(
-                                                        wx.ART_NORMAL_FILE,
-                                                        wx.ART_OTHER, isz))}
+                                                              wx.ART_OTHER,
+                                                              isz)),
+            FILE_ICON: il.Add(wx.ArtProvider_GetBitmap(wx.ART_NORMAL_FILE,
+                                                       wx.ART_OTHER, isz))}
         self.SetImageList(il)
 
     def GetIconId(self, icon):
@@ -64,4 +63,25 @@ class ControlsTreeCtrl(wx.lib.customtreectrl.CustomTreeCtrl):
 
         return array
 
+    def CheckById(self, ids):
+        """
+        Checks all items from the given list.
 
+        This function goes through all the items in this tree, and if their
+        PyData object's ids are in the given ids list, they get checked -
+        otherwise they are unchecked.
+
+        :param set ids: a set of ids which are to be checked
+        """
+        def CheckItems(item, ids):
+            data = self.GetPyData(item)
+            if data:
+                item.Check(data.id in ids)
+
+            if item.HasChildren():
+                for child in item.GetChildren():
+                    CheckItems(child, ids)
+
+        idRoot = self.GetRootItem()
+        if idRoot:
+            CheckItems(idRoot, ids)
