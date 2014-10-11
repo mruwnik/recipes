@@ -28,7 +28,7 @@ class RecipesWindow(GUI.MainWindow):
         session.close()
 
         self.tabsContainer.SetSelection(self.tabs["edit"])
-        self.setupEditRecipe()
+        self.setupEditRecipe(self.edit_recipe_tab)
 
         self.recipes_menu_options = ["open in new tab", "edit", "delete"]
 
@@ -109,14 +109,14 @@ class RecipesWindow(GUI.MainWindow):
         else:
             self.setStatusBarText("errors")
 
-    def setupEditRecipe(self):
+    def setupEditRecipe(self, tab):
         substance_names = [name.name for name in
                                     self.database.getSubstances(self.getSession())]
         unit_names = [name.name for name in
                                     self.database.getUnits(self.getSession())]
         groups = self.database.getGroups(self.getSession())
-        self.edit_recipe_tab.setup(groups, substance_names, unit_names)
-        self.edit_recipe_tab.set_save_action(self.saveRecipe)
+        tab.setup(groups, substance_names, unit_names)
+        tab.set_save_action(self.saveRecipe)
 
     def edit_recipe(self, recipe):
         tab = wx.Panel(self.tabsContainer, wx.ID_ANY,
@@ -132,22 +132,8 @@ class RecipesWindow(GUI.MainWindow):
         tabs_sizer.Fit(tab)
         self.tabsContainer.AddPage(tab, "edit recipe", True, wx.NullBitmap)
 
-        substance_names = [name.name for name in
-                                    self.database.getSubstances(self.getSession())]
-        unit_names = [name.name for name in
-                                    self.database.getUnits(self.getSession())]
-        groups = self.database.getGroups(self.getSession())
-        panel.setup(groups, substance_names, unit_names)
-        panel.set_save_action(self.saveRecipe)
-
-        if recipe:
-            panel.set_recipe(recipe)
-            panel.set_title(recipe.title)
-            panel.set_description(recipe.title)
-            panel.set_algorythm(recipe.algorythm)
-            panel.set_ingredients(recipe.ingredients)
-            panel.set_time(recipe.time)
-            panel.set_difficulty(recipe.difficulty)
+        self.setupEditRecipe(panel)
+        panel.set_recipe(recipe)
 
     def addNodeToTree(self, tree, parent, data, name, normalPic, expandedPic):
         node = tree.AppendItem(parent, name)
@@ -276,7 +262,7 @@ class RecipesWindow(GUI.MainWindow):
         if self.tabs["recipes"] == self.tabsContainer.GetSelection():
             self.setupRecipes(self.database.getRecipesByGroups(self.getSession()))
         elif self.tabs["edit"] == self.tabsContainer.GetSelection():
-            self.setupEditRecipe()
+            self.setupEditRecipe(self.edit_recipe_tab)
 
     def setStatusBarText(self, text):
         self.m_statusBar1.SetStatusText(unicode(text))

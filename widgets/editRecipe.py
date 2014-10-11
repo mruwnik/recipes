@@ -13,7 +13,6 @@ from widgets.ingredients import AddIngredients
 import images
 import widgets.treeControls as tc
 
-
 class EditRecipe (wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent, id=wx.ID_ANY,
@@ -29,8 +28,7 @@ class EditRecipe (wx.Panel):
         self.editRecipeGroupsLabel.Wrap( -1 )
         self.groups_container.Add( self.editRecipeGroupsLabel, 0, wx.ALL, 5 )
 
-#        self.editRecipesGroups = wx.TreeCtrl( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TR_DEFAULT_STYLE|wx.TR_HIDE_ROOT|wx.TR_MULTIPLE )
-        self.editRecipesGroups = tc.ControlsTreeCtrl( self, treemodel=tc.TreeModel())
+        self.editRecipesGroups = tc.ControlsTreeCtrl("Groups", self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TR_DEFAULT_STYLE|wx.TR_HIDE_ROOT|wx.TR_MULTIPLE)
         self.groups_container.Add( self.editRecipesGroups, 1, wx.ALL|wx.EXPAND, 5 )
 
         self.main_container.Add( self.groups_container, 1, wx.EXPAND, 5 )
@@ -468,8 +466,12 @@ class EditRecipe (wx.Panel):
         return self.editRecipeTime.GetValue()
     def get_difficulty(self):
         return self.editRecipeDifficulty.GetValue()
+
     def get_groups(self):
-        return [self.editRecipesGroups.GetPyData(group) for group in self.editRecipesGroups.GetSelections()]
+        """returns all selected groups"""
+        return [self.editRecipesGroups.GetPyData(item)
+                for item in self.editRecipesGroups.GetChecked()]
+
     def get_ingredients(self):
         return self.editRecipeIngredients.get_ingredients()
 
@@ -505,29 +507,6 @@ class EditRecipe (wx.Panel):
     def set_difficulty (self, value):
         self.editRecipeDifficulty.SetValue(str(value))
 
-    def addNodeToTree(self, tree, parent, data, name, normalPic, expandedPic):
-        node = tree.AppendItem(parent, name)
-        tree.SetPyData(node, data)
-        tree.SetItemImage(node, normalPic, wx.TreeItemIcon_Normal)
-        tree.SetItemImage(node, expandedPic, wx.TreeItemIcon_Expanded)
-        return node
-
-    def addNodesToTree(self, tree, treeNode, parent,
-                            normalPic, expandedPic, nameField="name",
-                           childrenField="children"):
-        for child in parent[childrenField]:
-            node = self.addNodeToTree(tree, treeNode, child,
-                            unicode(child[nameField]), normalPic, expandedPic)
-            if child[childrenField]:
-                self.addNodesToTree(tree, node, child, normalPic,
-                                    expandedPic, nameField, childrenField)
-
-    def addToTreeModel(self, treeModel, indices, data):
-        for child in data["children"]:
-            pass
-
-
-
     def clear(self):
         self.editRecipeName.SetValue("")
         self.editRecipeDesc.SetValue("")
@@ -538,7 +517,44 @@ class EditRecipe (wx.Panel):
         self.editRecipeIngredients.Clear(True)
         self.Layout()
 
+    def addNodesToTree(self, tree, treeNode, parent,
+                        normalPic, expandedPic, nameField="name",
+                        childrenField="children"):
+        """
+        Adds a list of objects to the given tree.
+
+        The list of objects can be nested, as long as it is
+        consistent in doing so. Each object should be a dictionary
+        where the given nameField contains the objects description
+        and the childrenField contains a list of children.
+
+        :param wx.TreeCtrl tree: the tree to which the objects are to be added
+        :param wx.TreeItemId treeNode: the node to which objects should be added
+        :param integer normalPic: the id of the pic for a normal object
+        :param integer expandedPic: the id of the pic for a selected object
+        :param str nameField: the field containing an objects name
+        :param str childrenField: the field containing an objects children
+        """
+        for child in parent[childrenField]:
+            node = tree.AppendItem(treeNode, unicode(child[nameField]), tc.CHECKBOX,
+                                   wnd=None, image=normalPic,
+                                   selImage=normalPic, data=child)
+            if child[childrenField]:
+                self.addNodesToTree(tree, node, child, normalPic,
+                                    expandedPic, nameField, childrenField)
+
     def setup(self, groups, substance_names, unit_names, recipe=None):
+        """
+        Sets up the edit screen with the given recipe.
+
+        If no recipe is given, then this simply acts as a "add new recipe"
+        screen.
+
+        :param list groups: a list of all available groups
+        :param list substance_names: a list of all substance names
+        :param list unit_names: a list of all unit names
+        :patam models.Recipe recipe: the recipe to be edited
+        """
         self.clear()
         self.substance_names = substance_names
         self.unit_names = unit_names
@@ -546,33 +562,18 @@ class EditRecipe (wx.Panel):
         self.editRecipeIngredients.set_substance_names(self.substance_names)
         self.editRecipeIngredients.set_unit_names(self.unit_names)
 
-        isz = (16,16)
-        il = wx.ImageList(isz[0], isz[1])
-        self.groupsIL = il
-        fldridx = il.Add(wx.ArtProvider_GetBitmap(wx.ART_FOLDER, wx.ART_OTHER, isz))
-        fldropenidx = il.Add(wx.ArtProvider_GetBitmap(wx.ART_FILE_OPEN, wx.ART_OTHER, isz))
-        fileidx =  il.Add(wx.ArtProvider_GetBitmap(wx.ART_NORMAL_FILE, wx.ART_OTHER, isz))
-        self.editRecipesGroups.SetImageList(il)
-
+        groupsRoot = self.editRecipesGroups.GetRootItem()
+        self.editRecipesGroups.DeleteChildren(groupsRoot)
         try:
-            self.editRecipesGroups.DeleteChildren(self.groupsRoot)
-        except:
-
-            self.groupsRoot = self.editRecipesGroups.AddRoot("Groups")
-            self.editRecipesGroups.SetPyData(self.groupsRoot, None)
-            self.editRecipesGroups.SetItemImage(self.groupsRoot, fldridx,
-                                            wx.TreeItemIcon_Normal)
-            self.editRecipesGroups.SetItemImage(self.groupsRoot, fldropenidx,
-                                                wx.TreeItemIcon_Expanded)
-
-        print "groups", groups
-        try:
-            self.addNodesToTree(self.editRecipesGroups, self.groupsRoot,
+            self.addNodesToTree(self.editRecipesGroups, groupsRoot,
                                 {"children":groups},
-                                fldridx, fldropenidx)
+                                self.editRecipesGroups.GetIconId(tc.FOLDER_ICON),
+                                self.editRecipesGroups.GetIconId(tc.FOLDER_OPEN_ICON))
         except Exception as e:
             print "got exception:", e
 
+        if recipe:
+            self.set_recipe(recipe)
 
     # Virtual event handlers, overide them in your derived class
     def filterGroups( self, event ):
@@ -593,9 +594,16 @@ class EditRecipe (wx.Panel):
 
     def set_recipe(self, recipe):
         self.recipe = recipe
+        self.set_title(recipe.title)
+        self.set_description(recipe.title)
+        self.set_algorythm(recipe.algorythm)
+        self.set_ingredients(recipe.ingredients)
+        self.set_time(recipe.time)
+        self.set_difficulty(recipe.difficulty)
 
     def get_recipe(self):
         try:
             return self.recipe
         except AttributeError as e:
             return None
+
