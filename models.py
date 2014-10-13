@@ -122,7 +122,7 @@ class Ingredient(Base):
 
     def __repr__(self):
         return "<Ingredients<amount='%s', unit='%s', recipe='%s', substance='%s'>" % \
-                (self.amount, self.unit_d, self.recipe_id, self.substance_id)
+                (self.amount, self.unit_id, self.recipe_id, self.substance_id)
 
     def __unicode__(self):
         return u"%s: %s" % (self.substance.name, self.standardise_amount())
@@ -210,8 +210,10 @@ class Recipe(Base):
                         onupdate=datetime.datetime.now)
 
     def __repr__(self):
+#        return "<Recipe(title='%s', description='%s', algorythm='%s')>" % \
+#            (self.title, self.description, self.algorythm)
         return "<Recipe(title='%s', description='%s', algorythm='%s')>" % \
-            (self.title, self.description, self.algorythm)
+            (self.title, "", "")#self.description, self.algorythm)
 
     def __str__(self):
         return self.__unicode__()

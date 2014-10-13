@@ -15,6 +15,11 @@ import locale, wx, sys, cStringIO
 import  wx.lib.mixins.listctrl  as  listmix
 
 from wx import ImageFromStream, BitmapFromImage
+
+#import i18n
+#_ = i18n.language.ugettext
+_ = unicode
+
 #----------------------------------------------------------------------
 def getSmallUpArrowData():
     return \
@@ -179,7 +184,6 @@ class TextCtrlAutoComplete (wx.TextCtrl, listmix.ColumnSorterMixin ):
     def onEnteredText(self, event):
         text = event.GetString()
 
-        print "ctrl callback:",self._entryCallback
         if self._entryCallback:
             self._entryCallback(self)
 

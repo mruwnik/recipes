@@ -1,0 +1,203 @@
+# Polish translations for PACKAGE package
+# Polskie t?umaczenia dla pakietu PACKAGE.
+# Copyright (C) 2014 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+#  <tojad99@gmail.com>, 2014.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-10-11 21:37+0200\n"
+"PO-Revision-Date: 2014-10-11 21:38+0200\n"
+"Last-Translator:  <tojad99@gmail.com>\n"
+"Language-Team: Polish\n"
+"Language: pl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-2\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
+
+#: widgets/ingredients.py:61 widgets/ingredients.py:161
+#: widgets/editRecipe.py:60
+msgid "name"
+msgstr "nazwa"
+
+#: widgets/ingredients.py:71 widgets/ingredients.py:77
+#: widgets/ingredients.py:165
+msgid "amount"
+msgstr "ilość"
+
+#: widgets/ingredients.py:82 widgets/ingredients.py:90
+#: widgets/ingredients.py:163
+msgid "unit"
+msgstr "jednostka"
+
+#: widgets/ingredients.py:99
+msgid "remove ingredient"
+msgstr "usuń składnik"
+
+#: widgets/recipePanel.py:48
+msgid "groups:"
+msgstr "grupy:"
+
+#: widgets/recipePanel.py:60
+msgid "cost:"
+msgstr "koszt:"
+
+#: widgets/recipePanel.py:72
+msgid "time:"
+msgstr "czas:"
+
+#: widgets/recipePanel.py:84
+msgid "difficulty:"
+msgstr "trudność:"
+
+#: widgets/editRecipe.py:32
+msgid "groups"
+msgstr "grupy"
+
+#: widgets/editRecipe.py:38
+msgid "Groups"
+msgstr "Grupy"
+
+#: widgets/editRecipe.py:73
+msgid "description"
+msgstr "opis"
+
+#: widgets/editRecipe.py:94
+msgid "recipe"
+msgstr "przepis"
+
+#: widgets/editRecipe.py:109
+msgid "ingredients"
+msgstr "składniki"
+
+#: widgets/editRecipe.py:122
+msgid "add another ingredient"
+msgstr "dodaj kolejny składnik"
+
+#: widgets/editRecipe.py:131
+msgid "time"
+msgstr "czas"
+
+#: widgets/editRecipe.py:144
+msgid "difficulty"
+msgstr "trudność"
+
+#: widgets/editRecipe.py:157
+msgid "save"
+msgstr "zapisz"
+
+#: widgets/editRecipe.py:188 widgets/editRecipe.py:207
+msgid "Choose a filename"
+msgstr "Wybierz plik"
+
+#: widgets/editRecipe.py:440
+msgid "Open"
+msgstr "Otwórz"
+
+#: widgets/editRecipe.py:442
+msgid "Save"
+msgstr "Zapisz"
+
+#: widgets/editRecipe.py:445
+msgid "Cut"
+msgstr "Wytnij"
+
+#: widgets/editRecipe.py:447
+msgid "Copy"
+msgstr "Kopiuj"
+
+#: widgets/editRecipe.py:449
+msgid "Paste"
+msgstr "Wklej"
+
+#: widgets/editRecipe.py:452
+msgid "Undo"
+msgstr "Cofnij"
+
+#: widgets/editRecipe.py:454
+msgid "Redo"
+msgstr "Przywróć"
+
+#: widgets/editRecipe.py:457
+msgid "Bold"
+msgstr ""
+
+#: widgets/editRecipe.py:459
+msgid "Italic"
+msgstr ""
+
+#: widgets/editRecipe.py:461
+msgid "Underline"
+msgstr "Podkreśl"
+
+#: widgets/editRecipe.py:464
+msgid "Align Left"
+msgstr ""
+
+#: widgets/editRecipe.py:466
+msgid "Center"
+msgstr "Wyśrodkuj"
+
+#: widgets/editRecipe.py:468
+msgid "Align Right"
+msgstr ""
+
+#: widgets/editRecipe.py:471
+msgid "Indent Less"
+msgstr ""
+
+#: widgets/editRecipe.py:473
+msgid "Indent More"
+msgstr ""
+
+#: widgets/editRecipe.py:476
+msgid "Font"
+msgstr "Czcionka"
+
+#: widgets/editRecipe.py:478
+msgid "Font Colour"
+msgstr "Kolor Czcionki"
+
+#: recipes.py:43
+msgid "open in new tab"
+msgstr "otwórz w nowej zakładce"
+
+#: recipes.py:43
+msgid "edit"
+msgstr "edytuj"
+
+#: recipes.py:43
+msgid "new"
+msgstr "nowe"
+
+#: recipes.py:43
+msgid "delete"
+msgstr "usuń"
+
+#: recipes.py:45
+msgid "setup: OK"
+msgstr "inicjalizacja: sukces"
+
+#: recipes.py:61
+msgid "saving recipe"
+msgstr "zapis przepisu"
+
+#: recipes.py:113
+msgid "errors"
+msgstr "wystąpiły błędy"
+
+#: recipes.py:138
+msgid "edit recipe"
+msgstr "edytuj przepis"
+
+#: recipes.py:140
+msgid "add recipe"
+msgstr "dodaj przepis"
+
+#: recipes.py:185
+msgid "Recipes"
+msgstr "Przepisy"

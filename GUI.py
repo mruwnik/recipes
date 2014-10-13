@@ -9,8 +9,12 @@
 
 import wx
 import wx.aui
+from widgets.ingredients import FindIngredients
 from widgets.recipePanel import RecipePanel
 from widgets.editRecipe import EditRecipe
+
+import gettext
+_ = gettext.gettext
 
 ###########################################################################
 ## Class MainWindow
@@ -19,7 +23,7 @@ from widgets.editRecipe import EditRecipe
 class MainWindow ( wx.Frame ):
 	
 	def __init__( self, parent ):
-		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"recipe", pos = wx.DefaultPosition, size = wx.Size( 1280,800 ), style = wx.CLOSE_BOX|wx.DEFAULT_FRAME_STYLE|wx.MAXIMIZE|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.TAB_TRAVERSAL )
+		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = _("recipe"), pos = wx.DefaultPosition, size = wx.Size( 1280,800 ), style = wx.CLOSE_BOX|wx.DEFAULT_FRAME_STYLE|wx.MAXIMIZE|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.TAB_TRAVERSAL )
 		
 		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
 		
@@ -29,47 +33,47 @@ class MainWindow ( wx.Frame ):
 		self.m_statusBar1 = self.CreateStatusBar( 1, wx.ST_SIZEGRIP, wx.ID_ANY )
 		bSizer1 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.tabsContainer = wx.aui.AuiNotebook( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.aui.AUI_NB_DEFAULT_STYLE )
+		self.tabsContainer = wx.aui.AuiNotebook( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.aui.AUI_NB_CLOSE_BUTTON|wx.aui.AUI_NB_SCROLL_BUTTONS|wx.aui.AUI_NB_TAB_MOVE|wx.aui.AUI_NB_WINDOWLIST_BUTTON )
 		self.recipesTab = wx.Panel( self.tabsContainer, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
 		bSizer2 = wx.BoxSizer( wx.VERTICAL )
 		
 		bSizer5 = wx.BoxSizer( wx.HORIZONTAL )
 		
-		self.searchRecipeNameLabel = wx.StaticText( self.recipesTab, wx.ID_ANY, u"recipe name", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.searchRecipeNameLabel = wx.StaticText( self.recipesTab, wx.ID_ANY, _("recipe name"), wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.searchRecipeNameLabel.Wrap( -1 )
 		bSizer5.Add( self.searchRecipeNameLabel, 0, wx.ALL, 5 )
 		
 		self.searchRecipeName = wx.TextCtrl( self.recipesTab, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer5.Add( self.searchRecipeName, 1, wx.ALL|wx.EXPAND, 5 )
 		
-		self.searchIngredientsLabel = wx.StaticText( self.recipesTab, wx.ID_ANY, u"ingredients", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.searchIngredientsLabel = wx.StaticText( self.recipesTab, wx.ID_ANY, _("ingredients"), wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.searchIngredientsLabel.Wrap( -1 )
 		self.searchIngredientsLabel.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 90, 90, False, wx.EmptyString ) )
 		
 		bSizer5.Add( self.searchIngredientsLabel, 0, wx.ALL, 5 )
 		
-		self.serachIngredients = wx.TextCtrl( self.recipesTab, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer5.Add( self.serachIngredients, 1, wx.ALL|wx.EXPAND, 5 )
+		self.searchIngredients = FindIngredients(self.recipesTab, name=_("ingredients"))
+		bSizer5.Add( self.searchIngredients, 5, wx.ALL, 5 )
 		
-		bSizer2.Add( bSizer5, 0, wx.ALIGN_LEFT, 5 )
+		bSizer2.Add( bSizer5, 0, wx.ALIGN_LEFT|wx.EXPAND, 5 )
 		
 		bSizer6 = wx.BoxSizer( wx.HORIZONTAL )
 		
-		self.searchRecipeCostLabel = wx.StaticText( self.recipesTab, wx.ID_ANY, u"cost", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.searchRecipeCostLabel = wx.StaticText( self.recipesTab, wx.ID_ANY, _("cost"), wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.searchRecipeCostLabel.Wrap( -1 )
 		bSizer6.Add( self.searchRecipeCostLabel, 0, wx.ALL, 5 )
 		
 		self.searchRecipeCost = wx.TextCtrl( self.recipesTab, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer6.Add( self.searchRecipeCost, 0, wx.ALL, 5 )
 		
-		self.searchGroupsLabel = wx.StaticText( self.recipesTab, wx.ID_ANY, u"groups", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.searchGroupsLabel = wx.StaticText( self.recipesTab, wx.ID_ANY, _("groups"), wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.searchGroupsLabel.Wrap( -1 )
 		bSizer6.Add( self.searchGroupsLabel, 0, wx.ALL, 5 )
 		
 		self.searchGroups = wx.TextCtrl( self.recipesTab, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer6.Add( self.searchGroups, 0, wx.ALL, 5 )
 		
-		self.searchButton = wx.Button( self.recipesTab, wx.ID_ANY, u"search", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.searchButton = wx.Button( self.recipesTab, wx.ID_ANY, _("search"), wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer6.Add( self.searchButton, 0, wx.ALL, 5 )
 		
 		bSizer2.Add( bSizer6, 0, wx.EXPAND, 5 )
@@ -87,7 +91,7 @@ class MainWindow ( wx.Frame ):
 		self.recipesTab.SetSizer( bSizer2 )
 		self.recipesTab.Layout()
 		bSizer2.Fit( self.recipesTab )
-		self.tabsContainer.AddPage( self.recipesTab, u"recipes", False, wx.NullBitmap )
+		self.tabsContainer.AddPage( self.recipesTab, _("recipes"), False, wx.NullBitmap )
 		self.addRecipeTab = wx.Panel( self.tabsContainer, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
 		bSizer111 = wx.BoxSizer( wx.VERTICAL )
 		
@@ -97,7 +101,7 @@ class MainWindow ( wx.Frame ):
 		self.addRecipeTab.SetSizer( bSizer111 )
 		self.addRecipeTab.Layout()
 		bSizer111.Fit( self.addRecipeTab )
-		self.tabsContainer.AddPage( self.addRecipeTab, u"add recipe", False, wx.NullBitmap )
+		self.tabsContainer.AddPage( self.addRecipeTab, _("add recipe"), False, wx.NullBitmap )
 		
 		bSizer1.Add( self.tabsContainer, 1, wx.EXPAND |wx.ALL, 5 )
 		
@@ -108,11 +112,9 @@ class MainWindow ( wx.Frame ):
 		
 		# Connect Events
 		self.tabsContainer.Bind( wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.tabChanged )
-		self.searchRecipeName.Bind( wx.EVT_TEXT, self.find_name )
-		self.serachIngredients.Bind( wx.EVT_CHAR, self.find_ingredient )
+		self.searchRecipeName.Bind( wx.EVT_TEXT, self.filterRecipes )
 		self.searchGroups.Bind( wx.EVT_CHAR, self.find_group )
 		self.searchButton.Bind( wx.EVT_BUTTON, self.findRecipes )
-		self.recipesList.Bind( wx.EVT_CHAR, self.filterRecipes )
 		self.recipesList.Bind( wx.EVT_TREE_ITEM_RIGHT_CLICK, self.showRecipesMenu )
 		self.recipesList.Bind( wx.EVT_TREE_SEL_CHANGED, self.selectRecipe )
 	
@@ -124,19 +126,13 @@ class MainWindow ( wx.Frame ):
 	def tabChanged( self, event ):
 		event.Skip()
 	
-	def find_name( self, event ):
-		event.Skip()
-	
-	def find_ingredient( self, event ):
+	def filterRecipes( self, event ):
 		event.Skip()
 	
 	def find_group( self, event ):
 		event.Skip()
 	
 	def findRecipes( self, event ):
-		event.Skip()
-	
-	def filterRecipes( self, event ):
 		event.Skip()
 	
 	def showRecipesMenu( self, event ):

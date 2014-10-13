@@ -3,20 +3,107 @@
 
 """ingredients.py: a widget to add ingredients"""
 
+from collections import OrderedDict
+
 import wx
 from TextCtrlAutoComplete import TextCtrlAutoComplete
 
-class AddIngredients (wx.Panel):
+import i18n
+_ = i18n.language.ugettext
 
-    def __init__ ( self, parent, substance_names=[], unit_names=[],
-                  **therest) :
 
-        wx.Panel.__init__(self, parent, **therest )
+class FindIngredients(TextCtrlAutoComplete):
+    """Allows to autocomplete a list of items seperated by ';'."""
+    def __init__(self, *args, **kwargs):
+        if 'choices' not in kwargs and 'multiChoices' not in kwargs:
+            kwargs['choices'] = ['']
+        super(FindIngredients, self).__init__(*args, **kwargs)
+        self._itemsCallback = kwargs.get('itemsCallback')
+
+    def onEnteredText(self, event):
+        """Shows autocompletion for the word in which the cursor is.
+
+        The text that precedes the current text position, up to any
+        found ';', is autocompleted.
+        """
+
+        text = event.GetString()
+        start = text.rfind(";", 0, self.GetInsertionPoint()) + 1
+
+        event = wx.CommandEvent()
+        event.SetString(text[start:self.GetInsertionPoint() + 1].strip())
+
+        super(FindIngredients, self).onEnteredText(event)
+        event.Skip()
+
+    def onKeyDown(self, event):
+        """Called when a key is pressed.
+
+        :param wx.KeyEvent event: the raised event
+        """
+        super(FindIngredients, self).onKeyDown(event)
+        event.Skip()
+
+    def _setValueFromSelected(self):
+        """Autocompletes the word in which the cursor is.
+
+        Called when a word from the autocomplete list is selected. The text
+        that is surrounding the current text position, up to any found ';',
+        is replaced with the selected word. After being selected, all
+        duplicates are removed and the list is tidied up
+        """
+        text = self.GetValue()
+        start = text.rfind(";", 0, self.GetInsertionPoint())
+        end = text.find(";", self.GetInsertionPoint())
+
+        super(FindIngredients, self)._setValueFromSelected()
+        value = ''
+        if start >= 0:
+            value = text[:start].strip() + ";"
+        value += self.GetValue()
+        if end >= 0:
+            value += text[end:]
+
+        words = list(OrderedDict
+                     .fromkeys(filter(None,
+                                      [w.strip() for w in value.split(";")])))
+        if self._itemsCallback:
+            self._itemsCallback(words)
+
+        self.SetValue("; ".join(words) + "; ")
+        self.SetInsertionPointEnd()
+
+    def GetItems(self):
+        """Get a list of all entered values
+
+        :return list: a list of all items
+        """
+        if not self.GetValue():
+            return []
+        return list(OrderedDict
+                    .fromkeys(filter(None,
+                                     [w.strip() for w in
+                                      self.GetValue().split(";")])))
+
+    def SetItemsCallback(self, fc=None):
+        """Set a callback for when an item is completed
+
+        :param function(list) fc: the callback
+        """
+        self._itemsCallback = fc
+
+
+class AddIngredients(wx.Panel):
+
+    def __init__(self, parent, substance_names=[], unit_names=[],
+                 **therest):
+
+        wx.Panel.__init__(self, parent, **therest)
 
         self.substance_names = substance_names
         self.unit_names = unit_names
 
-        self.edit_recipe_ingredients_container = wx.BoxSizer( wx.VERTICAL )
+        self.edit_recipe_ingredients_container = wx.BoxSizer(wx.VERTICAL)
 
         self.SetSizer(self.edit_recipe_ingredients_container)
 
@@ -41,10 +128,10 @@ class AddIngredients (wx.Panel):
         self.unit_names = names
 
     def add_ingredients_row(self, event, nameVal="", amountVal="", unitVal=""):
-        """Add an ingredient row
+        """Add an ingredient row.
 
-        the ingredient row is fully connected with autocompletion and a 'remove'
-        button
+        The ingredient row is fully connected with autocompletion and a
+        'remove' button.
 
         """
         if event:
@@ -55,8 +142,7 @@ class AddIngredients (wx.Panel):
         name = TextCtrlAutoComplete(self,
                                     choices=self.substance_names,
                                     selectCallback=self.selectCallback,
-                                    name="name"
-                                   )
+                                    name=_("name"))
 
         name.SetEntryCallback(self.find_ingredients)
         name.SetMatchFunction(self.match_function)
@@ -65,27 +151,27 @@ class AddIngredients (wx.Panel):
 
         sizer.Add(name, 3, wx.ALL, 5)
 
-        amount_desc = wx.StaticText(self, wx.ID_ANY, u"amount",
-                             wx.DefaultPosition, wx.DefaultSize, 0)
+        amount_desc = wx.StaticText(self, wx.ID_ANY, _(u"amount"),
+                                    wx.DefaultPosition, wx.DefaultSize, 0)
         amount_desc.Wrap(-1)
         sizer.Add(amount_desc, 0, wx.ALL, 5)
 
         ingredients_amount = wx.TextCtrl(self, wx.ID_ANY, wx.EmptyString,
-                                   wx.DefaultPosition, wx.DefaultSize, 0, name="amount")
+                                         wx.DefaultPosition, wx.DefaultSize,
+                                         0, name=_("amount"))
         sizer.Add(ingredients_amount, 1, wx.ALL, 5)
         if amountVal:
             ingredients_amount.SetValue(amountVal)
 
-        unit_desc = wx.StaticText(self, wx.ID_ANY, u"unit",
-                                    wx.DefaultPosition, wx.DefaultSize, 0)
+        unit_desc = wx.StaticText(self, wx.ID_ANY, _(u"unit"),
+                                  wx.DefaultPosition, wx.DefaultSize, 0)
         unit_desc.Wrap(-1)
         sizer.Add(unit_desc, 0, wx.ALL, 5)
 
         unit = TextCtrlAutoComplete(self,
                                     choices=self.unit_names,
                                     selectCallback=self.selectCallback,
-                                    name="unit"
-                                   )
+                                    name=_("unit"))
         unit.SetEntryCallback(self.find_units)
         unit.SetMatchFunction(self.match_function)
         if unitVal:
@@ -93,8 +179,8 @@ class AddIngredients (wx.Panel):
 
         sizer.Add(unit, 1, wx.ALL, 5)
 
-        remove_ingredient = wx.Button(self, wx.ID_ANY, u"remove ingredient",
-                                    wx.DefaultPosition, wx.DefaultSize, 0)
+        remove_ingredient = wx.Button(self, wx.ID_ANY, _(u"remove ingredient"),
+                                      wx.DefaultPosition, wx.DefaultSize, 0)
         sizer.Add(remove_ingredient, 0, wx.ALL, 5)
 
         self.edit_recipe_ingredients_container.Add(sizer, 0, wx.EXPAND, 5)
@@ -109,7 +195,7 @@ class AddIngredients (wx.Panel):
 
         current_choices = ctrl.GetChoices()
         choices = [choice for choice in self.substance_names
-                                if self.match_function(text, choice)]
+                   if self.match_function(text, choice)]
         if choices != current_choices:
             ctrl.SetChoices(choices)
 
@@ -135,7 +221,7 @@ class AddIngredients (wx.Panel):
 
         current_choices = ctrl.GetChoices()
         choices = [choice for choice in self.unit_names
-                                if self.match_function(text, choice)]
+                   if self.match_function(text, choice)]
         if choices != current_choices:
             ctrl.SetChoices(choices)
 
@@ -155,11 +241,11 @@ class AddIngredients (wx.Panel):
         for child in elem.GetChildren():
             if child.IsWindow():
                 item = child.GetWindow()
-                if item.GetName() == "name":
+                if item.GetName() == _("name"):
                     name = item.GetValue()
-                elif item.GetName() == "unit":
+                elif item.GetName() == _("unit"):
                     unit = item.GetValue()
-                elif item.GetName() == "amount":
+                elif item.GetName() == _("amount"):
                     amount = item.GetValue()
         if not name and not amount and not unit:
             return None
@@ -190,7 +276,7 @@ class AddIngredients (wx.Panel):
                 if ingredient and ingredient[0] not in names:
                     ingredients.append(ingredient)
                     names.add(ingredient[0])
-                elif ingredient == False:
+                elif ingredient is False:
                     errors = True
         if validate and errors:
             return None

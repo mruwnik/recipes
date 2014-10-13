@@ -73,13 +73,18 @@ class DBConfig:
             branch[group] = {"recipes": []}
             return branch[group]
 
-    def getRecipesByGroups(self, session, parent=None, title=None):
+    def getRecipesByGroups(self, session, parent=None,
+                           title=None, ingredients=None):
         query = session.query(Recipe)
+        if ingredients:
+            query = query.join(Ingredient).join(Substance).\
+                filter(Recipe.id == Ingredient.recipe_id).\
+                filter(Substance.id == Ingredient.substance_id).\
+                filter(Substance.name.in_(ingredients))
         if title:
-            logging.info(u"search for Recipe: %s", title)
             query = query.filter(Recipe.title.like(title))
-        recipes = query.all()
 
+        recipes = query.all()
         tree = {"recipes": []}
         for recipe in recipes:
             try:
@@ -89,8 +94,8 @@ class DBConfig:
                 else:
                     tree["recipes"].append(recipe)
             except Exception as e:
-                logging.error(u'error for %s' % recipe.title)
                 logging.error(e)
+                logging.error(u'error for %s' % recipe)
 
         return tree
 

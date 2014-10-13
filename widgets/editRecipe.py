@@ -10,10 +10,12 @@ import wx
 import wx.aui
 import wx.richtext as rt
 import wx.lib.scrolledpanel as scrolled
+
 from widgets.ingredients import AddIngredients
 import images
 import widgets.treeControls as tc
-
+import i18n
+_ = i18n.language.ugettext
 
 class EditRecipe (wx.Panel):
     def __init__(self, parent):
@@ -27,13 +29,13 @@ class EditRecipe (wx.Panel):
         self.groups_container = wx.BoxSizer(wx.VERTICAL)
 
         self.editRecipeGroupsLabel = wx.StaticText(self, wx.ID_ANY,
-                                                   u"groups",
+                                                   _(u"groups"),
                                                    wx.DefaultPosition,
                                                    wx.DefaultSize, 0)
         self.editRecipeGroupsLabel.Wrap(-1)
         self.groups_container.Add(self.editRecipeGroupsLabel, 0, wx.ALL, 5)
 
-        self.editRecipesGroups = tc.ControlsTreeCtrl("Groups", self,
+        self.editRecipesGroups = tc.ControlsTreeCtrl(_("Groups"), self,
                                                      wx.ID_ANY,
                                                      wx.DefaultPosition,
                                                      wx.DefaultSize,
@@ -55,7 +57,7 @@ class EditRecipe (wx.Panel):
         self.fields_container.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_SPECIFIED)
 
         self.editRecipeNameLabel = wx.StaticText(panel1, wx.ID_ANY,
-                                                 u"name",
+                                                 _(u"name"),
                                                  wx.DefaultPosition,
                                                  wx.DefaultSize, 0)
         self.editRecipeNameLabel.Wrap(-1)
@@ -68,7 +70,7 @@ class EditRecipe (wx.Panel):
         self.fields_container.Add(self.editRecipeName, 1, wx.EXPAND, 5)
 
         self.editRecipeDescLabel = wx.StaticText(panel1, wx.ID_ANY,
-                                                 u"description",
+                                                 _(u"description"),
                                                  wx.DefaultPosition,
                                                  wx.DefaultSize, 0)
         self.editRecipeDescLabel.Wrap(-1)
@@ -89,7 +91,7 @@ class EditRecipe (wx.Panel):
 
         self.editRecipeAlgorythmLabel = wx.StaticText(panel1,
                                                       wx.ID_ANY,
-                                                      u"recipe",
+                                                      _(u"recipe"),
                                                       wx.DefaultPosition,
                                                       wx.DefaultSize, 0)
         self.editRecipeAlgorythmLabel.Wrap(-1)
@@ -104,7 +106,7 @@ class EditRecipe (wx.Panel):
 
         self.editRecipeIngredientsLabel = wx.StaticText(panel1,
                                                         wx.ID_ANY,
-                                                        u"ingredients",
+                                                        _(u"ingredients"),
                                                         wx.DefaultPosition,
                                                         wx.DefaultSize, 0)
         self.editRecipeIngredientsLabel.Wrap(-1)
@@ -117,7 +119,7 @@ class EditRecipe (wx.Panel):
         self.fields_container.AddSpacer((0, 0), 1, wx.ALL | wx.EXPAND, 5)
 
         self.editRecipeMoreIngredients = wx.Button(panel1, wx.ID_ANY,
-                                                   u"add another ingredient",
+                                                   _(u"add another ingredient"),
                                                    wx.DefaultPosition,
                                                    wx.DefaultSize, 0)
         self.fields_container.Add(self.editRecipeMoreIngredients, 0, wx.ALL, 5)
@@ -126,7 +128,7 @@ class EditRecipe (wx.Panel):
 
         self.fields_container.AddSpacer((0, 0), 1, wx.EXPAND, 5)
 
-        self.m_staticText31 = wx.StaticText(panel1, wx.ID_ANY, u"time",
+        self.m_staticText31 = wx.StaticText(panel1, wx.ID_ANY, _(u"time"),
                                             wx.DefaultPosition,
                                             wx.DefaultSize, 0)
         self.m_staticText31.Wrap(-1)
@@ -139,7 +141,7 @@ class EditRecipe (wx.Panel):
         self.fields_container.Add(self.editRecipeTime, 0, wx.ALL, 5)
 
         self.m_staticText32 = wx.StaticText(panel1, wx.ID_ANY,
-                                            u"difficulty",
+                                            _(u"difficulty"),
                                             wx.DefaultPosition,
                                             wx.DefaultSize, 0)
         self.m_staticText32.Wrap(-1)
@@ -152,7 +154,7 @@ class EditRecipe (wx.Panel):
         self.fields_container.Add(self.editRecipeDifficulty, 0, wx.ALL, 5)
 
         self.editRecipeSave = wx.Button(panel1, wx.ID_ANY,
-                                        u"save",
+                                        _(u"save"),
                                         wx.DefaultPosition,
                                         wx.DefaultSize, 0)
         self.fields_container.Add(self.editRecipeSave, 0, wx.ALL, 5)
@@ -183,7 +185,7 @@ class EditRecipe (wx.Panel):
         # This gives us a string suitable for the file dialog based on
         # the file handlers that are loaded
         wildcard, types = rt.RichTextBuffer.GetExtWildcard(save=False)
-        dlg = wx.FileDialog(self, "Choose a filename",
+        dlg = wx.FileDialog(self, _("Choose a filename"),
                             wildcard=wildcard,
                             style=wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
@@ -202,7 +204,7 @@ class EditRecipe (wx.Panel):
     def OnFileSaveAs(self, evt):
         wildcard, types = rt.RichTextBuffer.GetExtWildcard(save=True)
 
-        dlg = wx.FileDialog(self, "Choose a filename",
+        dlg = wx.FileDialog(self, _("Choose a filename"),
                             wildcard=wildcard,
                             style=wx.SAVE)
         if dlg.ShowModal() == wx.ID_OK:
@@ -435,45 +437,45 @@ class EditRecipe (wx.Panel):
         tbar = wx.ToolBar(container, -1)
 
         doBind(tbar.AddTool(-1, images.get_rt_openBitmap(),
-                            shortHelpString="Open"), self.OnFileOpen)
+                            shortHelpString=_("Open")), self.OnFileOpen)
         doBind(tbar.AddTool(-1, images.get_rt_saveBitmap(),
-                            shortHelpString="Save"), self.OnFileSave)
+                            shortHelpString=_("Save")), self.OnFileSave)
         tbar.AddSeparator()
         doBind(tbar.AddTool(wx.ID_CUT, images.get_rt_cutBitmap(),
-                            shortHelpString="Cut"), self.ForwardEvent, self.ForwardEvent)
+                            shortHelpString=_("Cut")), self.ForwardEvent, self.ForwardEvent)
         doBind(tbar.AddTool(wx.ID_COPY, images.get_rt_copyBitmap(),
-                            shortHelpString="Copy"), self.ForwardEvent, self.ForwardEvent)
+                            shortHelpString=_("Copy")), self.ForwardEvent, self.ForwardEvent)
         doBind(tbar.AddTool(wx.ID_PASTE, images.get_rt_pasteBitmap(),
-                            shortHelpString="Paste"), self.ForwardEvent, self.ForwardEvent)
+                            shortHelpString=_("Paste")), self.ForwardEvent, self.ForwardEvent)
         tbar.AddSeparator()
         doBind(tbar.AddTool(wx.ID_UNDO, images.get_rt_undoBitmap(),
-                            shortHelpString="Undo"), self.ForwardEvent, self.ForwardEvent)
+                            shortHelpString=_("Undo")), self.ForwardEvent, self.ForwardEvent)
         doBind(tbar.AddTool(wx.ID_REDO, images.get_rt_redoBitmap(),
-                            shortHelpString="Redo"), self.ForwardEvent, self.ForwardEvent)
+                            shortHelpString=_("Redo")), self.ForwardEvent, self.ForwardEvent)
         tbar.AddSeparator()
         doBind(tbar.AddTool(-1, images.get_rt_boldBitmap(), isToggle=True,
-                            shortHelpString="Bold"), self.OnBold, self.OnUpdateBold)
+                            shortHelpString=_("Bold")), self.OnBold, self.OnUpdateBold)
         doBind(tbar.AddTool(-1, images.get_rt_italicBitmap(), isToggle=True,
-                            shortHelpString="Italic"), self.OnItalic, self.OnUpdateItalic)
+                            shortHelpString=_("Italic")), self.OnItalic, self.OnUpdateItalic)
         doBind(tbar.AddTool(-1, images.get_rt_underlineBitmap(), isToggle=True,
-                            shortHelpString="Underline"), self.OnUnderline, self.OnUpdateUnderline)
+                            shortHelpString=_("Underline")), self.OnUnderline, self.OnUpdateUnderline)
         tbar.AddSeparator()
         doBind(tbar.AddTool(-1, images.get_rt_alignleftBitmap(), isToggle=True,
-                            shortHelpString="Align Left"), self.OnAlignLeft, self.OnUpdateAlignLeft)
+                            shortHelpString=_("Align Left")), self.OnAlignLeft, self.OnUpdateAlignLeft)
         doBind(tbar.AddTool(-1, images.get_rt_centreBitmap(), isToggle=True,
-                            shortHelpString="Center"), self.OnAlignCenter, self.OnUpdateAlignCenter)
+                            shortHelpString=_("Center")), self.OnAlignCenter, self.OnUpdateAlignCenter)
         doBind(tbar.AddTool(-1, images.get_rt_alignrightBitmap(), isToggle=True,
-                            shortHelpString="Align Right"), self.OnAlignRight, self.OnUpdateAlignRight)
+                            shortHelpString=_("Align Right")), self.OnAlignRight, self.OnUpdateAlignRight)
         tbar.AddSeparator()
         doBind(tbar.AddTool(-1, images.get_rt_indentlessBitmap(),
-                            shortHelpString="Indent Less"), self.OnIndentLess)
+                            shortHelpString=_("Indent Less")), self.OnIndentLess)
         doBind(tbar.AddTool(-1, images.get_rt_indentmoreBitmap(),
-                            shortHelpString="Indent More"), self.OnIndentMore)
+                            shortHelpString=_("Indent More")), self.OnIndentMore)
         tbar.AddSeparator()
         doBind(tbar.AddTool(-1, images.get_rt_fontBitmap(),
-                            shortHelpString="Font"), self.OnFont)
+                            shortHelpString=_("Font")), self.OnFont)
         doBind(tbar.AddTool(-1, images.get_rt_colourBitmap(),
-                            shortHelpString="Font Colour"), self.OnColour)
+                            shortHelpString=_("Font Colour")), self.OnColour)
 
         tbar.Realize()
         return tbar

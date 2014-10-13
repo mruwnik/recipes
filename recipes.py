@@ -15,52 +15,91 @@ import sqlalchemy.exc
 import GUI
 from widgets.recipePanel import RecipePanel
 from widgets.editRecipe import EditRecipe
+from widgets.treeControls import FILE_ICON, FOLDER_ICON, FOLDER_OPEN_ICON
 from database import DBConfig
 from database import session_scope
 from models import *
 
+import i18n
+_ = i18n.language.ugettext
 
-logging.basicConfig(filename='recipes.log',level=logging.DEBUG)
+logging.basicConfig(filename='recipes.log', level=logging.DEBUG)
 
 
 class RecipesWindow(GUI.MainWindow):
     def setup(self):
-        self.tabs = {"recipes" : 0,
-                     "edit" : 1}
+        self.tabs = {"recipes": 0,
+                     "edit": 1}
 
         self.database = DBConfig('sqlite:///database.db')
 
         session = self.database.getSession()
-        self.userId =  session.query(User).filter(User.name.like('dan')).first().id
+        self.userId = session.query(User)\
+            .filter(User.name.like('dan')).first().id
 
         session.close()
 
-        self.tabsContainer.SetSelection(self.tabs["edit"])
+        self.tabsContainer.SetSelection(self.tabs["recipes"])
+        isz = (16, 16)
+        self.il = wx.ImageList(isz[0], isz[1])
+        self.icons = {
+            FOLDER_ICON: self.il.Add(wx.ArtProvider_GetBitmap(wx.ART_FOLDER,
+                                                              wx.ART_OTHER, isz)),
+            FOLDER_OPEN_ICON: self.il.Add(wx.ArtProvider_GetBitmap(wx.ART_FILE_OPEN,
+                                                                   wx.ART_OTHER,
+                                                              isz)),
+            FILE_ICON: self.il.Add(wx.ArtProvider_GetBitmap(wx.ART_NORMAL_FILE,
+                                                            wx.ART_OTHER, isz))}
+        self.recipesList.SetImageList(self.il)
+        self.getRecipes()
+        with session_scope(self.database) as session:
+            substance_names = [name.name for name in
+                               self.database.getSubstances(session)]
+            self.searchIngredients.SetChoices(substance_names)
+
+        self.searchIngredients.SetItemsCallback(self.filterIngredients)
+
         self.setupEditRecipe(self.edit_recipe_tab)
 
-        self.recipes_menu_options = ["open in new tab", "edit", "delete"]
+        self.recipes_menu_options = [_("open in new tab"), _("edit"),
+                                     _("new"), _("delete")]
 
-        self.setStatusBarText("setup: OK")
+        self.setStatusBarText(_("setup: OK"))
 
-    def findRecipes( self, event ):
+    def getRecipes(self, name=None, ingredients=None, groups=None):
+        print name, ingredients
+        with session_scope(self.database) as session:
+            self.setupRecipes(self.database.
+                              getRecipesByGroups(session,
+                                                 title=name,
+                                                 ingredients=ingredients))
+        if name or ingredients:
+            self.recipesList.ExpandAllChildren(self.recipesList.GetRootItem())
+        else:
+            self.recipesList.CollapseAllChildren(self.recipesList.GetRootItem())
+
+    def filterIngredients(self, items):
+        name = None
+        if self.searchRecipeName.GetValue():
+            name = "%" + self.searchRecipeName.GetValue() + "%"
+        self.getRecipes(name, items)
+
+    def filterRecipes(self, event):
         event.Skip()
-        name = "%" + self.searchRecipeName.GetValue() + "%"
-        self.setupRecipes(self.database
-                          .getRecipesByGroups(self.getSession(),
-                                               title=name))
+        name = None
+        if event.GetString():
+            name = '%' + event.GetString() + '%'
+        self.getRecipes(name, self.searchIngredients.GetItems())
 
-    def filterRecipes( self, event ):
-        event.Skip()
-
-    def filterGroups( self, event ):
+    def filterGroups(self, event):
         event.Skip()
 
     def saveRecipe(self, edit_recipe):
-        self.setStatusBarText("saving recipe")
+        self.setStatusBarText(_("saving recipe"))
         errors = False
 
         ingredients = edit_recipe.get_ingredients()
-        if ingredients == None:
+        if ingredients is None:
             errors = True
 
         title = edit_recipe.get_name()
@@ -71,7 +110,10 @@ class RecipesWindow(GUI.MainWindow):
         if not errors:
             with session_scope(self.database) as session:
                 logging.debug("user %s" % session.query(User).get(self.userId))
-                recipe = session.query(Recipe).get(edit_recipe.get_recipe_id())
+                recipe = None
+                if edit_recipe.get_recipe_id():
+                    recipe = session.query(Recipe)\
+                        .get(edit_recipe.get_recipe_id())
                 if not recipe:
                     recipe = Recipe()
                 recipe.title = title
@@ -94,48 +136,55 @@ class RecipesWindow(GUI.MainWindow):
                 for substance, amount, unit in ingredients:
                     try:
                         session.add(Ingredient(recipe=recipe,
-                                                  substance=self.database\
-                                                      .getSubstance(substance,
-                                                                    session),
-                                                  unit=self.database\
-                                                         .getUnit(unit, session),
-                                                  amount=amount))
+                                               substance=self.database
+                                               .getSubstance(substance,
+                                                             session),
+                                               unit=self.database
+                                               .getUnit(unit,
+                                                        session),
+                                               amount=amount))
                     except sqlalchemy.exc.IntegrityError as e:
                         logging.error(e)
 
             current = self.tabsContainer.GetSelection()
             self.tabsContainer.SetSelection(self.tabs["recipes"])
-            #TODO: this should be a delete, but that causes everything to blow up
+         #TODO: this should be a delete, but that causes everything to blow up
             self.tabsContainer.RemovePage(current)
         else:
-            self.setStatusBarText("errors")
+            self.setStatusBarText(_("errors"))
 
     def setupEditRecipe(self, tab):
         with session_scope(self.database) as session:
             substance_names = [name.name for name in
-                                    self.database.getSubstances(session)]
+                               self.database.getSubstances(session)]
             unit_names = [name.name for name in
-                                    self.database.getUnits(session)]
+                          self.database.getUnits(session)]
             groups = self.database.getGroups(session)
             tab.setup(groups, substance_names, unit_names)
             tab.set_save_action(self.saveRecipe)
 
-    def edit_recipe(self, recipe):
+    def edit_recipe(self, recipe=None):
         tab = wx.Panel(self.tabsContainer, wx.ID_ANY,
-                           wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL)
+                       wx.DefaultPosition, wx.DefaultSize,
+                       wx.TAB_TRAVERSAL)
 
         tabs_sizer = wx.BoxSizer(wx.VERTICAL)
 
         panel = EditRecipe(tab)
-        tabs_sizer.Add(panel, 1, wx.ALL|wx.EXPAND, 5)
+        tabs_sizer.Add(panel, 1, wx.ALL | wx.EXPAND, 5)
 
         tab.SetSizer(tabs_sizer)
         tab.Layout()
         tabs_sizer.Fit(tab)
-        self.tabsContainer.AddPage(tab, "edit recipe", True, wx.NullBitmap)
+        if recipe:
+            title = _("edit recipe")
+        else:
+            title = _("add recipe")
+        self.tabsContainer.AddPage(tab, title, True, wx.NullBitmap)
 
         self.setupEditRecipe(panel)
-        panel.set_recipe(recipe)
+        if recipe:
+            panel.set_recipe(recipe)
 
     def addNodeToTree(self, tree, parent, data, name, normalPic, expandedPic):
         node = tree.AppendItem(parent, name)
@@ -150,45 +199,42 @@ class RecipesWindow(GUI.MainWindow):
         for child, data in iter(sorted(groups.items())):
             if child != "recipes":
                 node = self.addNodeToTree(tree, treeNode,  child, child.name,
-                                        normalPic, expandedPic)
+                                          normalPic, expandedPic)
                 self.addRecipesToTree(tree, node, data,
-                                  normalPic, expandedPic, recipePic)
+                                      normalPic, expandedPic, recipePic)
 
         try:
             for recipe in groups["recipes"]:
                 self.addNodeToTree(tree, treeNode, recipe, recipe.title,
-                                        recipePic, expandedPic)
+                                   recipePic, expandedPic)
         except:
             pass
 
     def setupRecipes(self, recipes, selected=None):
         tree = self.recipesList
 
-        isz = (16,16)
-        il = wx.ImageList(isz[0], isz[1])
-        fldridx = il.Add(wx.ArtProvider_GetBitmap(wx.ART_FOLDER, wx.ART_OTHER, isz))
-        fldropenidx = il.Add(wx.ArtProvider_GetBitmap(wx.ART_FILE_OPEN, wx.ART_OTHER, isz))
-        fileidx = il.Add(wx.ArtProvider_GetBitmap(wx.ART_NORMAL_FILE, wx.ART_OTHER, isz))
-        self.recipesList.SetImageList(il)
-        self.il = il
-
         try:
             tree.DeleteChildren(self.recipesRoot)
         except:
-            self.recipesRoot = tree.AddRoot("Recipes")
+            self.recipesRoot = tree.AddRoot(_("Recipes"))
 
-        self.addRecipesToTree(tree, self.recipesRoot, recipes,
-                                        fldridx, fldropenidx, fileidx)
+        if recipes["recipes"]:
+            self.addRecipesToTree(tree, self.recipesRoot, recipes,
+                                  self.icons[FOLDER_ICON],
+                                  self.icons[FOLDER_OPEN_ICON],
+                                  self.icons[FILE_ICON])
 
-        item, cookie = tree.GetFirstChild(tree.GetRootItem())
-        while item and tree.ItemHasChildren(item):
-            item, cookie = tree.GetFirstChild(item)
-        with session_scope(self.database) as session:
-            recipe = session.query(Recipe)\
+            item, cookie = tree.GetFirstChild(tree.GetRootItem())
+            while item and tree.ItemHasChildren(item):
+                item, cookie = tree.GetFirstChild(item)
+            with session_scope(self.database) as session:
+                recipe = session.query(Recipe)\
                     .get(self.recipesList.GetPyData(item))
 
-            self.setStatusBarText(recipe)
-            self.showRecipe(recipe, self.recipe_panel)
+                self.setStatusBarText(recipe)
+                self.showRecipe(recipe, self.recipe_panel)
+        else:
+            self.clearRecipe(self.recipe_panel)
 
     def showRecipe(self, recipe, panel):
         panel.set_title(recipe.title)
@@ -196,7 +242,7 @@ class RecipesWindow(GUI.MainWindow):
         panel.set_description(recipe.description,
                               not recipe.description.startswith("<?xml"))
         panel.set_algorythm(recipe.algorythm,
-                              not recipe.algorythm.startswith("<?xml"))
+                            not recipe.algorythm.startswith("<?xml"))
 
         ingredients = ""
         for i in recipe.ingredients:
@@ -213,6 +259,15 @@ class RecipesWindow(GUI.MainWindow):
         panel.set_groups(groups)
         panel.set_time(recipe.time)
         panel.set_difficulty(recipe.difficulty)
+
+    def clearRecipe(self, panel):
+        panel.set_title('')
+        panel.set_description('', True)
+        panel.set_algorythm('', True)
+        panel.set_ingredients('')
+        panel.set_groups('')
+        panel.set_time('')
+        panel.set_difficulty('')
 
     def showRecipesMenu(self, event):
         event.Skip()
@@ -232,11 +287,13 @@ class RecipesWindow(GUI.MainWindow):
     def recipe_options(self, event):
         with session_scope(self.database) as session:
             recipe = session.query(Recipe).get(self.selected_recipe)
-            if event.GetId() == 0: # open in new tab
+            if event.GetId() == 0:  # open in new tab
                 self.open_recipe_tab(recipe)
-            elif event.GetId() == 1: # edit
+            elif event.GetId() == 1:  # edit
                 self.edit_recipe(recipe)
-            elif event.GetId() == 2: # delete
+            elif event.GetId() == 2:  # new
+                self.edit_recipe()
+            elif event.GetId() == 3:  # delete
                 session.delete(recipe)
                 session.commit()
                 self.selected_recipe = None
@@ -245,12 +302,12 @@ class RecipesWindow(GUI.MainWindow):
 
     def open_recipe_tab(self, recipe):
         tab = wx.Panel(self.tabsContainer, wx.ID_ANY,
-                           wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL)
+                       wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL)
 
         tabs_sizer = wx.BoxSizer(wx.VERTICAL)
 
         recipe_panel = RecipePanel(tab)
-        tabs_sizer.Add(recipe_panel, 1, wx.ALL|wx.EXPAND, 5)
+        tabs_sizer.Add(recipe_panel, 1, wx.ALL | wx.EXPAND, 5)
 
         tab.SetSizer(tabs_sizer)
         tab.Layout()
@@ -271,28 +328,19 @@ class RecipesWindow(GUI.MainWindow):
         else:
             self.recipesList.Toggle(item)
 
-    def tabChanged( self, event ):
+    def tabChanged(self, event):
         event.Skip()
         if self.tabs["recipes"] == self.tabsContainer.GetSelection():
-            with session_scope(self.database) as session:
-                self.setupRecipes(self.database.getRecipesByGroups(session))
+            name = None
+            if self.searchRecipeName.GetValue():
+                name = "%" + self.searchRecipeName.GetValue() + "%"
+            self.getRecipes(name, self.searchIngredients.GetItems())
 #        elif self.tabs["edit"] == self.tabsContainer.GetSelection():
 #            self.setupEditRecipe(self.edit_recipe_tab)
 
     def setStatusBarText(self, text):
         self.m_statusBar1.SetStatusText(unicode(text))
 
-    def find_name(self, event):
-        event.Skip()
-        name = self.searchRecipeName.GetValue()
-        with session_scope(self.database) as session:
-            if name:
-                self.setupRecipes(self.database
-                                  .getRecipesByGroups(session,
-                                                      title="%" + name + "%"))
-                self.recipesList.ExpandAll()
-            else:
-                self.setupRecipes(self.database.getRecipesByGroups(session))
 
 def AddRTCHandlers():
         # make sure we haven't already added them.
